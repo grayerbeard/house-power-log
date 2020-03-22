@@ -27,7 +27,7 @@ from math import sqrt
 #from ads_lib import ADS1015
 #GAIN = 1
 ##import ADS1115
-import Adafruit_ADS1x15
+#import Adafruit_ADS1x15
 
 
 from datetime import datetime
@@ -36,43 +36,33 @@ from datetime import datetime
 from utility import pr,make_time_text,send_by_ftp
 from text_buffer import class_text_buffer
 from config import class_config
+from get_adc import class_get_ads
 
+scan_size = 200
+diff_channel = 3
 config = class_config()
-
-#ads = ADS1115.ADS1115()
-adc=Adafruit_ADS1x15.ADS1015()
-
+adc = class_get_ads(scan_size,diff_channel,config)
 
 headings = ["Date_time","Time Step","Gain","Rdg03","Rdg13","Rdg23","ac03","ac13","AC23"] # "currents RMS","Current","ZeroCrosses","Spare1","Spare2"]
 analog_buffer = class_text_buffer(headings,config)
 
+reading_0_3 = [0.0]*(scan_size + 1)
+reading_1_3 = [0.0]*(scan_size + 1)
+reading_2_3 = [0.0]*(scan_size + 1)
+gain = [0.0]*(scan_size + 1)
+reading_ac_0_3 = [0.0]*(scan_size + 1)
+reading_ac_1_3 = [0.0]*(scan_size + 1)
 
-
-
-
-
-
-
-
-delay = 2
-rc_max = 200
-reading_0_3 = [0.0]*(rc_max + 1)
-reading_1_3 = [0.0]*(rc_max + 1)
-reading_2_3 = [0.0]*(rc_max + 1)
-gain = [0.0]*(rc_max + 1)
-reading_ac_0_3 = [0.0]*(rc_max + 1)
-reading_ac_1_3 = [0.0]*(rc_max + 1)
-
-reading_ac_2_3 = [0.0]*(rc_max + 1)
-reading_square_total = [0.0]*(rc_max + 1)
-reading_ac_max = [0.0]*(rc_max + 1)
-current_rms = [0.0]*(rc_max + 1)
-current = [0.0]*(rc_max + 1)
-reading_time = [0.0]*(rc_max + 1)
-time_step = [0.0]*(rc_max + 1)
+reading_ac_2_3 = [0.0]*(scan_size + 1)
+reading_square_total = [0.0]*(scan_size + 1)
+reading_ac_max = [0.0]*(scan_size + 1)
+current_rms = [0.0]*(scan_size + 1)
+current = [0.0]*(scan_size + 1)
+reading_time = [0.0]*(scan_size + 1)
+time_step = [0.0]*(scan_size + 1)
 GAIN = 1
-last_cycle_max = [0.0]*(rc_max + 1)
-zero_crossing = [0]*(rc_max + 1)
+last_cycle_max = [0.0]*(scan_size + 1)
+zero_crossing = [0]*(scan_size + 1)
 
 
 #reference = explorerhat.analog.one.read()
@@ -97,66 +87,23 @@ reading_time[0] = 1000*(datetime.now() - start_time).total_seconds()
 GAIN = int(1)
 
 gain_scan = 0
-gain_scan_limit = int(rc_max/5)
+gain_scan_limit = int(scan_size/5)
 
-cal0 = 2
-cal1 = -0.593
-cal2 = 0.172
-offset0 = -0.625
-offset1 = 3.375
-offset2 = -12 
+cal0 = 1 # 2
+cal1 = 1 #-0.593
+cal2 = 1 # 0.172
+offset0 = 0 #-0.625
+offset1 = 0 # 3.375
+offset2 = 0 # -12 
 
-while not_finished:
-	#reading[rc] = explorerhat.analog.two.read()
-	#reading[rc] = ads.readADCSingleEnded()
-	#reading[rc] =  adc.read_adc(1, gain=GAIN)
-	# pri#nt(GAIN)
-	#reading_0_3[rc] = cal0*(offset0+(adc.read_adc_difference(1,gain = GAIN)/GAIN)) 
-	#reading_1_3[rc] = cal1*(offset1+(adc.read_adc_difference(2,gain = GAIN)/GAIN))
-	reading_2_3[rc] = cal2*(offset2+(adc.read_adc_difference(3,gain = GAIN)/GAIN))
-	#reading_ac_0_3[rc] = abs(reading_0_3[rc])
-	#reading_ac_1_3[rc] = abs(reading_1_3[rc])
-	reading_ac_2_3[rc] = abs(reading_2_3[rc])
-	gain[rc] = GAIN
-	#if reading_0_1[rc] * reading_0_1[rc-1] < 0	 :
-	#	if (last_cycle_max[rc-1] > 1800) and (GAIN > 2):
-	#		GAIN = GAIN/2
-	#	if (last_cycle_max[rc-1] < 900) and (GAIN < 16):
-	#		GAIN = GAIN * 2
-	#	zero_crossing[rc] = zero_crossing[rc-1] + 1
-	#	last_cycle_max[rc] = 0
-	#else:
-	#	zero_crossing[rc] = zero_crossing[rc-1]
-	#	if reading_ac[rc] > last_cycle_max[rc-1]:
-	#		last_cycle_max[rc] = reading_ac[rc]
-	#	else:
-	#		last_cycle_max[rc] = last_cycle_max[rc-1]
-	reading_time[rc] = 1000*(datetime.now() - start_time).total_seconds()
-	if gain_scan >= gain_scan_limit:
-		if GAIN <= 8:
-			GAIN = int(GAIN * 2)
-		else:
-			GAIN = int(1)
-		gain_scan = 0
-	else:
-		gain_scan += 1
 
-	if (reading_time[rc] >= 50000) or (rc >= rc_max):
-		not_finished = False
-	else:
-		rc +=1
-end_time = datetime.now()
-
-rc_max = rc
-
-reference = (reference + adc.read_adc(0, gain=GAIN))/2
 
 #print( reference)
 adc.read_adc_difference
 
 read_time = (end_time - start_time).total_seconds()
 
-for rc in range(0,rc_max+1,1):
+for rc in range(0,scan_size+1,1):
 	#if rc >=1:
 		#reading_ac[rc] = abs(reading[rc])
 		#if reading_ac[rc]>reading_ac_max["Date_time","Time Step","gain","Rdg01","Rdg23","ac01","ac23,"currents RMS","Current","ZeroCrosses","Spare1","Spare2"rc-1]:
