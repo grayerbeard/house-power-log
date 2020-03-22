@@ -7,4 +7,4 @@ Started work begining March 2020.
 # Diary
 March 23rd:
 
-Set up GitHub Repositary based on a working Python script that does seem to get data OK from CT.  Now starting to work out algorithm for setting gains to use for ADS1015 to adjust for varying load.  Also will need to develope method to deretmin rms current form input scans.
+Set up GitHub Repositary based on a working Python script that does seem to get data OK from CT.  Now starting to work out algorithm for setting gains to use for ADS1015 to adjust for varying load.  Also will need to develope method to determine rms current fr0m input scans.
