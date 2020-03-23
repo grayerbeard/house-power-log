@@ -40,35 +40,37 @@ from get_adc import class_get_ads
 
 scan_size = 200
 diff_channel = 3
+top_limit = 2020
+bottom_limit = 980
 config = class_config()
-adc = class_get_ads(scan_size,diff_channel,config)
+adc = class_get_ads(scan_size,diff_channel,config,top_limit,bottom_limit)
 
-headings = ["Date_time","Time Step","Gain","Rdg03","Rdg13","Rdg23","ac03","ac13","AC23"] # "currents RMS","Current","ZeroCrosses","Spare1","Spare2"]
+headings = ["Time","Time Step","Gain","Reading"] #"Rdg13","Rdg23","ac03","ac13","AC23"] # "currents RMS","Current","ZeroCrosses","Spare1","Spare2"]
 analog_buffer = class_text_buffer(headings,config)
 
-reading_0_3 = [0.0]*(scan_size + 1)
-reading_1_3 = [0.0]*(scan_size + 1)
-reading_2_3 = [0.0]*(scan_size + 1)
-gain = [0.0]*(scan_size + 1)
-reading_ac_0_3 = [0.0]*(scan_size + 1)
-reading_ac_1_3 = [0.0]*(scan_size + 1)
+#reading_0_3 = [0.0]*(scan_size + 1)
+#reading_1_3 = [0.0]*(scan_size + 1)
+#reading_2_3 = [0.0]*(scan_size + 1)
+#gain = [0.0]*(scan_size + 1)
+#reading_ac_0_3 = [0.0]*(scan_size + 1)
+#reading_ac_1_3 = [0.0]*(scan_size + 1)
 
-reading_ac_2_3 = [0.0]*(scan_size + 1)
-reading_square_total = [0.0]*(scan_size + 1)
-reading_ac_max = [0.0]*(scan_size + 1)
-current_rms = [0.0]*(scan_size + 1)
-current = [0.0]*(scan_size + 1)
-reading_time = [0.0]*(scan_size + 1)
-time_step = [0.0]*(scan_size + 1)
-GAIN = 1
-last_cycle_max = [0.0]*(scan_size + 1)
-zero_crossing = [0]*(scan_size + 1)
+#reading_ac_2_3 = [0.0]*(scan_size + 1)
+#reading_square_total = [0.0]*(scan_size + 1)
+#reading_ac_max = [0.0]*(scan_size + 1)
+#current_rms = [0.0]*(scan_size + 1)
+#current = [0.0]*(scan_size + 1)
+#reading_time = [0.0]*(scan_size + 1)
+#time_step = [0.0]*(scan_size + 1)
+#GAIN = 1
+#last_cycle_max = [0.0]*(scan_size + 1)
+#zero_crossing = [0]*(scan_size + 1)
 
 
 #reference = explorerhat.analog.one.read()
-reference = adc.read_adc(0, gain=GAIN)
+#reference = adc.read_adc(0, gain=GAIN)
 
-rc = 1
+#rc = 1
 #print(reference)
 
 not_finished = True
