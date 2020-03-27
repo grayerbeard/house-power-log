@@ -52,10 +52,10 @@ class class_get_adc(object):
 			self.input_milli_volts[scan_count] = self.adc_milli_volts[scan_count] / self.__input_amp_gain
 			self.peak_current[scan_count] = self.input_milli_volts[scan_count]/self.__CT_resister/self.__CT_ratio
 			#Check for just been a zero crossing negative to positive
-			if rms_totaler_enable:
+			if True: # rms_totaler_enable:
 				rms_current_total = rms_current_total + (self.peak_current[scan_count] * self.peak_current[scan_count])
 			#print(round((self.peak_current[scan_count] * self.peak_current[scan_count]),2),round(self.peak_current[scan_count],2),rms_current_total)
-			if (self.peak_current[scan_count] * self.peak_current[scan_count-1] < 0) and (self.peak_current[scan_count] > 0) : 
+			if True: #(self.peak_current[scan_count] * self.peak_current[scan_count-1] < 0) and (self.peak_current[scan_count] > 0) : 
 				rms_totaler_enable = True
 				rms_totaller_cycle_count +=1
 				self.rms_current[scan_count] = 2 * sqrt(rms_current_total/(scan_count+1))
@@ -74,21 +74,23 @@ self.input_milli_volts[scan_count],self.peak_current[scan_count],self.rms_curren
 			if abs(self.reading[scan_count]) > self.__top_limit and (self.gain > 1) and self.gain_change_count < change_limit:
 				self.gain = int(self.gain/2)
 				self.gain_change_count += 1
+				rms_current_total = 0
 				reading_ac_max = 0
 				time_from_gain_change = 0
 				if do_resets: 
 					scan_count = -1
-					rms_total = 0.001
+					# rms_current_total = 0
 					rms_totaler_enable = False
 					self.rms_current[scan_count] = 0
 			elif time_from_gain_change > 60 and (reading_ac_max < self.__bottom_limit) and (self.gain_change_count < change_limit) and (self.gain < 16):
 				self.gain = int(self.gain*2)
 				self.gain_change_count += 1
+				rms_current_total = 0
 				reading_ac_max = 0
 				time_from_gain_change = 0
 				if do_resets: 
 					scan_count = -1
-					rms_total = 0.001
+					# rms_current_total = 0
 					rms_totaler_enable = False
 					self.rms_current[scan_count] = 0
 			scan_count += 1

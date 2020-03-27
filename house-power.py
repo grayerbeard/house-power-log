@@ -47,8 +47,8 @@ top_limit = 2020
 bottom_limit = 980
 #input_offset_mv = -6.5  # tested for channel 2
 #input_amp_gain = 100 # tested for channel 2
-input_offset_mv = 19 # tested for channel 3
-input_amp_gain = 10.615 # tested for channel 3
+input_offset_mv = 31 # tested for channel 3
+input_amp_gain = 9.48 # tested for channel 3
 CT_ratio = 1 # mAmps out to Amps in.
 CT_resister = 22
 
