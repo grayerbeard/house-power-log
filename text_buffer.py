@@ -85,7 +85,7 @@ class class_text_buffer(object):
 			if self.__posn == self.__config.text_buffer_length-1:
 				# last insert was at the end so go back to beginning@@
 				self.__posn = 0
-			else:
+			else:#
 				# first increment insert position by one
 				self.__posn += 1
 				# then insert a line full of values
@@ -101,14 +101,15 @@ class class_text_buffer(object):
 		#print("Buffer updated and log buffer flag is : ",self.__config.log_buffer_flag)
 		if self.__config.log_buffer_flag:
 			self.__log.log_to_file(self.__headings,values)
-			
+		else:
+			print("Not logging")
 			#self.__log.copy_log_to_www(False)
 			#send log file to website configevery ten scans
 
 				# *************************
 			#if self.__send_log_count > 10:
 
-
+#
 				#print("Sending log file by FTP")
 
 			#	self.__log.send_log_by_ftp(False,self.__config.log_directory,self.__config.ftp_timeout)
@@ -128,7 +129,7 @@ class class_text_buffer(object):
 			return(line_dta)
 		else:
 			# need to take values from after current insert position
-			for i in range(self.__width):
+			for i in range(self.__width):#
 				#following two lines used too debug the calc to get the lower part of status file
 				#print("That Calc key,self.__size,self.__config.text_buffer_length, self.__posn-key,key sum",
 				 #  key,self.__size,self.__config.text_buffer_length, self.__posn-key,(self.__posn-key),self.(self.__config.text_buffer_length + (self.__posn-key))
@@ -148,7 +149,8 @@ class class_text_buffer(object):
 
 	def just_log(self,appnd,ref,log_time,refresh_interval):
 		self.__log.log_to_file(self.__headings,self.line_values)
-
+		print("calling copy log to www")
+		self.__log.copy_log_to_www(True)
 
 	def pr(self,appnd,ref,log_time,refresh_interval):
 		here = "buffer.pr for " + self.__config.prog_name

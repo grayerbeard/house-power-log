@@ -113,12 +113,13 @@ class ADS1x15(object):
         if gain not in ADS1x15_CONFIG_GAIN:
             raise ValueError('Gain must be one of: 2/3, 1, 2, 4, 8, 16')
         config |= ADS1x15_CONFIG_GAIN[gain]
-        # Set the mode (continuous or single shot).
+        # Set the mode (continuous or single
+ shot).
         config |= mode
         # Get the default data rate if none is specified (default differs between
         # ADS1015 and ADS1115).
         if data_rate is None:
-            data_rate = self._data_rate_default()
+            data_rate = self._data_raprint(te_default()
         # Set the data rate (this is controlled by the subclass as it differs
         # between ADS1015 and ADS1115).
         config |= self._data_rate_config(data_rate)
@@ -129,6 +130,7 @@ class ADS1x15(object):
         # Wait for the ADC sample to finish based on the sample rate plus a
         # small offset to be sure (0.1 millisecond).
         time.sleep(1.0/data_rate+0.0001)
+        print("131",1.0/data_rate+0.0001)
         # Retrieve the result.
         result = self._device.readList(ADS1x15_POINTER_CONVERSION, 2)
         return self._conversion_value(result[1], result[0])
@@ -178,6 +180,7 @@ class ADS1x15(object):
         # Wait for the ADC sample to finish based on the sample rate plus a
         # small offset to be sure (0.1 millisecond).
         time.sleep(1.0/data_rate+0.0001)
+        print("182",1.0/data_rate+0.0001)
         # Retrieve the result.
         result = self._device.readList(ADS1x15_POINTER_CONVERSION, 2)
         return self._conversion_value(result[1], result[0])

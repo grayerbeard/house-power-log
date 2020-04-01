@@ -47,15 +47,14 @@ class class_buffer_log:
 		starttime = datetime.now()
 		timestamp = make_time_text(starttime)
 		self.__log_filename = timestamp + "_" + self.__config.prog_name + "_" + "lg.csv"
-		print(self.__config.prog_path,self.__config.log_directory)
 		self.__log_filename_save_as = self.__config.prog_path + self.__config.log_directory + self.__log_filename
 		self.__local_www_log_filename = self.__config.local_dir_www + self.__config.log_directory + self.__log_filename
+		print(self.__config.prog_path,self.__config.log_directory,self.__log_filename,self.__log_filename_save_as,self.__local_www_log_filename)
 
 
 	def log_to_file(self,log_headings,log_values):
 		here = 	"log_cpu_data_to_file"
 		#write the time at the start of the line in logging file
-	
 		if self.__no_heading_yet:
 			self.__no_heading_yet = False
 			self.__log_file = open(self.__log_filename_save_as,'w')
@@ -66,9 +65,8 @@ class class_buffer_log:
 			self.__log_file.write(str(log_values[z]) + ",")
 		self.__log_file.write("\n")
 		self.__log_file.flush()
-		
 		return
-		
+
 	def send_log_by_ftp(self,FTP_dbug_flag,remote_log_dir,ftp_timeout):
 		here = "bffr_log_log_by_ftp"
 		ftp_result = send_by_ftp(FTP_dbug_flag,self.__config.ftp_creds_filename, self.__log_filename_save_as, \

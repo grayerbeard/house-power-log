@@ -38,12 +38,17 @@ from sys import argv as sys_argv
 #from w1thermsensor import W1ThermSensor
 
 # Local application imports
-from utility import pr,make_time_text,send_by_ftp
+from utility import pr,make_time_text,send_by_ftp,str2bool
 
 
 class class_config:
 	def __init__(self):
 # Start of items set in config.cfg
+	# Debug
+		self.debug_reread_config = False   
+		self.debug_flag_1 = False
+		self.debug_flag_2 = False
+		self.debug_flag_ftp = False
 	# Scan
 		self.scan_delay = 10		# delay in seconds between each scan (not incl sensor responce times)
 		self.max_scans = 0			# number of scans to do, set to zero to scan for ever (until type "ctrl C")
@@ -57,17 +62,33 @@ class class_config:
 		self.ftp_log_max_count  = 5
 		self.ftp_timeout = 0.5
 		self.ftplog = 0		# Number of Value Changes before Log File is Saved to remote website, 0 means every change
-	# Fan
-		self.max_temp =  69.0
-		self.min_temp = 61.0 
-		self.min_speed = 75
-		self.max_speed = 90
-		self.min_freq = 2.0
-		self.max_freq = 5.0
-		self.brightness = 80
+	# Heating Fan
+		self.heat_max_temp =  16
+		self.heat_min_temp =  15
+		self.heat_min_speed =  20
+		self.heat_max_speed =  100
+		self.heat_min_freq =  6
+		self.heat_max_freq =  6
+	# Sauna
+		self.sauna_max_temp =  69.0
+		self.sauna_min_temp = 61.0 
+		self.sauna_min_speed = 75
+		self.sauna_max_speed = 90
+		self.sauna_min_freq = 2.0
+		self.sauna_max_freq = 5.0
+		self.sauna_brightness = 80
+	# Power Log
+		self.adc_scan_size = 100
+		self.adc_channel = 0
+		self.adc_default_gain = 1
+		self.adc_top_limit = 2000
+		self.adc_bottom_limit = 950
+		self.adc_input_offset_mv = 0 # 27.6518 #23.2184 # 26.62 # tested for channel 3
+		self.adc_input_amp_gain = 9.48 # tested for channel 3
+		self.CT_ratio = 1 # mAmps out to Amps in.
+		self.CT_resister = 22
 # End of items set in config.cfg	
 
-# Start of parameters are not saved to the config file
 		# Based on the program name work out names for other files
 		# First three use the program pathname	
 		self.prog_path = path.dirname(path.realpath(__file__)) + "/"
@@ -80,6 +101,11 @@ class class_config:
 		here = "config.read_file"
 		config_read = RawConfigParser()
 		config_read.read(self.config_filename)
+		section = "Debug"
+		self.debug_reread_config = str2bool(config_read.get(section, 'debug_reread_config'))
+		self.debug_flag_1 = str2bool(config_read.get(section, 'debug_flag_1'))
+		self.debug_flag_2 = str2bool(config_read.get(section, 'debug_flag_2'))
+		self.debug_flag_ftp = str2bool(config_read.get(section, 'debug_flag_ftp'))
 		section = "Scan"
 		self.scan_delay = float(config_read.get(section, 'scan_delay')) 
 		self.max_scans = float(config_read.get(section, 'max_scans'))
@@ -91,19 +117,43 @@ class class_config:
 		section = "Ftp"
 		self.ftp_creds_filename = config_read.get(section, 'ftp_creds_filename') 
 		self.ftp_log_max_count = float(config_read.get(section, 'ftp_log_max_count'))
-		section = "Fan"		
-		self.max_temp =  float(config_read.get(section, 'max_temp'))
-		self.min_temp =  float(config_read.get(section, 'min_temp'))
-		self.min_speed =  float(config_read.get(section, 'min_speed'))
-		self.max_speed =  float(config_read.get(section, 'max_speed'))
-		self.min_freq =  float(config_read.get(section, 'min_freq'))
-		self.max_freq =  float(config_read.get(section, 'max_freq'))
-		self.brightness =  float(config_read.get(section, 'brightness'))
+		section = "Heating_Fan"
+		self.heat_max_temp =  float(config_read.get(section, 'heat_max_temp'))
+		self.heat_min_temp =  float(config_read.get(section, 'heat_min_temp'))
+		self.heat_max_speed =  float(config_read.get(section, 'heat_max_speed'))
+		self.heat_min_speed =  float(config_read.get(section, 'heat_min_speed'))
+		self.heat_max_freq =  float(config_read.get(section, 'heat_max_freq'))
+		self.heat_min_freq =  float(config_read.get(section, 'heat_min_freq'))
+		section = "Sauna"
+		self.sauna_max_temp = float(config_read.get(section, 'sauna_max_temp'))
+		self.sauna_min_temp = float(config_read.get(section, 'sauna_min_temp'))
+		self.sauna_max_speed =  float(config_read.get(section, 'sauna_max_speed'))
+		self.sauna_min_speed =  float(config_read.get(section, 'sauna_min_speed'))
+		self.sauna_max_freq = float(config_read.get(section, 'sauna_max_freq'))
+		self.sauna_min_freq = float(config_read.get(section, 'sauna_min_freq'))
+		self.sauna_GPIO_port  =  float(config_read.get(section, 'sauna_GPIO_port'))
+		self.sauna_brightness = float(config_read.get(section, 'sauna_brightness'))
+		section = "Power_Log"
+		self.adc_scan_size  =  int(config_read.get(section, 'adc_scan_size'))
+		self.adc_channel  =  int(config_read.get(section, 'adc_channel'))
+		self.adc_default_gain  =  int(config_read.get(section, 'adc_default_gain'))
+		self.adc_top_limit  =  int(config_read.get(section, 'adc_top_limit'))
+		self.adc_bottom_limit  =  int(config_read.get(section, 'adc_bottom_limit'))
+		self.adc_input_offset_mv  =  float(config_read.get(section, 'adc_input_offset_mv'))
+		self.adc_input_amp_gain  =  float(config_read.get(section, 'adc_input_amp_gain'))
+		self.adc_CT_ratio  =  float(config_read.get(section, 'adc_CT_ratio')) 
+		self.adc_CT_resister  =  float(config_read.get(section, 'adc_CT_resister'))
 		return
 
 	def write_file(self):
 		here = "config.write_file"
 		config_write = RawConfigParser()
+		section = "Debug"
+		config_write.add_section(section)
+		config_write.set(section, 'debug_reread_config',self.debug_reread_config)
+		config_write.set(section, 'debug_flag_1',self.debug_flag_1)
+		config_write.set(section, 'debug_flag_2',self.debug_flag_2)
+		config_write.set(section, 'debug_flag_ftp',self.debug_flag_ftp)
 		section = "Scan"
 		config_write.add_section(section)
 		config_write.set(section, 'scan_delay',self.scan_delay)
@@ -118,19 +168,100 @@ class class_config:
 		config_write.add_section(section)
 		config_write.set(section, 'ftp_creds_filename',self.ftp_creds_filename)
 		config_write.set(section, 'ftp_log_max_count',self.ftp_log_max_count)
-		section = "Fan"	
-		config_write.add_section(section)	
-		config_write.set(section, 'max_temp',self.max_temp)
-		config_write.set(section, 'min_temp',self.min_temp)
-		config_write.set(section, 'min_speed',self.min_speed)
-		config_write.set(section, 'max_speed',self.max_speed)		
-		config_write.set(section, 'min_freq',self.min_freq)
-		config_write.set(section, 'max_freq',self.max_freq)
-		config_write.set(section, 'brightness',self.max_freq)			
+		section = "Heating_Fan"
+		config_write.add_section(section)
+		config_write.set(section, 'heat_max_temp',self.heat_max_temp)
+		config_write.set(section, 'heat_min_temp',self.heat_min_temp)
+		config_write.set(section, 'heat_max_speed',self.heat_max_speed)
+		config_write.set(section, 'heat_min_speed',self.heat_min_speed)
+		config_write.set(section, 'heat_max_freq',self.heat_max_freq)
+		config_write.set(section, 'heat_min_freq',self.heat_min_freq)
+		section = "Sauna"
+		config_write.add_section(section)
+		config_write.set(section, 'sauna_max_temp',self.sauna_max_temp)
+		config_write.set(section, 'sauna_min_temp',self.sauna_min_temp)
+		config_write.set(section, 'sauna_max_speed',self.sauna_max_speed)
+		config_write.set(section, 'sauna_min_speed',self.sauna_min_speed)
+		config_write.set(section, 'sauna_max_freq',self.sauna_max_freq)
+		config_write.set(section, 'sauna_min_freq',self.sauna_min_freq)
+		config_write.set(section, 'sauna_GPIO_port',self.sauna_GPIO_port)
+		config_write.set(section, 'sauna_brightness',self.sauna_brightness)
+		section = "Power_Log"
+		config_write.add_section(section)
+		config_write.set(section, 'adc_scan_size',self.adc_scan_size)
+		config_write.set(section, 'adc_channel',self.adc_channel)
+		config_write.set(section, 'adc_default_gain ',self.adc_default_gain )
+		config_write.set(section, 'adc_top_limit',self.adc_top_limit)
+		config_write.set(section, 'adc_bottom_limit',self.adc_bottom_limit)
+		config_write.set(section, 'adc_input_offset_mv',self.adc_input_offset_mv)
+		config_write.set(section, 'adc_input_amp_gain',self.adc_input_amp_gain)
+		config_write.set(section, 'adc_CT_ratio',self.adc_CT_ratio)
+		config_write.set(section, 'adc_CT_resister',self.adc_CT_resister)
 		
 		# Writing our configuration file to 'self.config_filename'
-		pr(self.dbug, here, "ready to write new config file with default values: " , self.config_filename)
+		pr(self.debug_flag_1, here, "ready to write new config file with default values: " , self.config_filename)
 		with open(self.config_filename, 'w+') as configfile:
 			config_write.write(configfile)
 		return 0
 
+	def print_config(self):
+		here = "config.print_config"
+		print("\n                   Section Debug")
+		print(" config.debug_reread_config is: ",self.debug_reread_config)   
+		print("        config.debug_flag_1 is: ",self.debug_flag_1)
+		print("        config.debug_flag_2 is: ",self.debug_flag_2)
+		print("      config.debug_flag_ftp is: ",self.debug_flag_ftp)
+		print("\n                    Section Scan")
+		print("          config.scan_delay is: ",self.scan_delay)
+		print("          config.max_scans  is: ",self.max_scans)
+		print("\n                     Section Log")
+		print("      config.log_directory  is: ",self.log_directory)
+		print("      config.local_dir_www  is: ",self.local_dir_www)
+		print("    config.log_buffer_flag  is: ",self.log_buffer_flag)
+		print(" config.text_buffer_length  is: ",self.text_buffer_length)
+		print("\n                     Section Ftp")
+		print(" config.ftp_creds_filename  is: ",self.ftp_creds_filename)
+		print("   config.ftp_log_max_count is: ",self.ftp_log_max_count)
+		print("        config.ftp_timeout  is: ",self.ftp_timeout)
+		print("             config.ftplog  is: ",self.ftplog)
+		print("\n             Section Heating Fan")
+		print("      config.heat_max_temp  is: ",self.heat_max_temp)
+		print("      config.heat_min_temp  is: ",self.heat_min_temp)
+		print("     config.heat_min_speed  is: ",self.heat_min_speed)
+		print("     config.heat_max_speed  is: ",self.heat_max_speed)
+		print("      config.heat_min_freq  is: ",self.heat_min_freq)
+		print("      config.heat_max_freq  is: ",self.heat_max_freq)
+		print("\n                   Section Sauna")
+		print("     config.sauna_max_temp  is: ",self.sauna_max_temp)
+		print("     config.sauna_min_temp  is: ",self.sauna_min_temp) 
+		print("    config.sauna_min_speed  is: ",self.sauna_min_speed)
+		print("    config.sauna_max_speed  is: ",self.sauna_max_speed)
+		print("     config.sauna_min_freq  is: ",self.sauna_min_freq)
+		print("     config.sauna_max_freq  is: ",self.sauna_max_freq)
+		print("   config.sauna_brightness  is: ",self.sauna_brightness)
+		print("\n               Section Power Log")
+		print("      config.adc_scan_size  is: ",self.adc_scan_size)
+		print("        config.adc_channel  is: ",self.adc_channel)
+		print("  config.adc_default_gain)  is: ",self.adc_default_gain)
+		print("      config.adc_top_limit  is: ",self.adc_top_limit)
+		print("   config.adc_bottom_limit  is: ",self.adc_bottom_limit)
+		print("config.adc_input_offset_mv  is: ",self.adc_input_offset_mv)
+		print(" config.adc_input_amp_gain  is: ",self.adc_input_amp_gain)
+		print("           config.CT_ratio  is: ",self.CT_ratio)
+		print("        config.CT_resister  is: ",self.CT_resister)
+
+	def check_reread_flag(self):
+		here = "config.read_file"
+		config_read = RawConfigParser()
+		config_read.read(self.config_filename)
+		section = "Debug"
+		return str2bool(config_read.get(section, 'debug_reread_config'))
+
+	def reset_reread_flag(self):
+		here = "reset_reread_flag"
+		self.debug_reread_config = False
+		self.write_file()
+		#config_write = RawConfigParser()
+		#section = "Debug"
+		#config_write.set(section, 'debug_reread_config',False)
+		#self.debug_reread_config = False

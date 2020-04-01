@@ -2,42 +2,33 @@ import Adafruit_ADS1x15
 import time
 from datetime import datetime
 from math import sqrt
-from text_buffer import class_text_buffer
 
 class class_get_adc(object):
 	# Rotating Buffer Class
 	# Initiate with just the size required Parameter
 	# Get data with just a position in buffer Parameter
-#	def __init__(self,scan_size,channel,config,default_gain,top_limit,bottom_limit,input_offset_mv,input_amp_gain,CT_resister,CT_ratio):
-	def __init__(self,config):
+	def __init__(self,scan_size,channel,config,default_gain,top_limit,bottom_limit,input_offset_mv,input_amp_gain,CT_resister,CT_ratio):
 		#initialization
-		#self.__config = config
-		
+		self.__config = config
+		self.gain = default_gain
 		self.__adc=Adafruit_ADS1x15.ADS1015()
-		
-		self.gain = config.adc_default_gain
-
-		self.scan_size =  config.adc_scan_size
-		self.__channel = config.adc_channel
-		self.__top_limit = config.adc_top_limit
-		self.__bottom_limit = config.adc_bottom_limit 
-		self.__input_offset_mv = config.adc_input_offset_mv
-		self.__input_amp_gain = config.adc_input_amp_gain
-		self.__CT_resister = config.CT_resister
-		self.__CT_ratio = config.CT_ratio
-
+		self.scan_size =  scan_size
+		self.__channel = channel
 		self.reading = [0.0]*(self.scan_size + 1)
 		self.adc_milli_volts = [0.0]*(self.scan_size + 1)
 		self.input_milli_volts = [0.0]*(self.scan_size + 1)
 		self.peak_current = [0.0]*(self.scan_size + 1)
 		self.rms_current = [0.0]*(self.scan_size + 1)
 		self.reading_time = [0.0]*(self.scan_size + 1)
-		self.reading_gain = [self.gain]*(self.scan_size + 1)
+		self.reading_gain = [default_gain]*(self.scan_size + 1)
 		self.scan_interval =  [0.1]*(self.scan_size + 1)
 		self.gain_change_count = 0
-
-		headings = ["Time","Time Step","gain","Reading","adc Milli Volts","Input mv","I","Irms" ] 
-		self.__adc_buffer = class_text_buffer(headings,config)
+		self.__top_limit = top_limit
+		self.__bottom_limit = bottom_limit 
+		self.__input_offset_mv = input_offset_mv
+		self.__input_amp_gain = input_amp_gain
+		self.__CT_resister = CT_resister
+		self.__CT_ratio = CT_ratio
             
 
 	def do_scan(self,do_resets,change_limit,debug_flag):
@@ -106,23 +97,3 @@ self.input_milli_volts[scan_count],self.peak_current[scan_count],self.rms_curren
 					self.rms_current[scan_count] = 0
 			scan_count += 1
 		return self.gain_change_count
-
-	def do_log(self,debug_flag):
-		for rc in range(1,self.scan_size,1):
-#                0        1        2       3          4                5       6    7    8             9            10      11
-#headings = ["Time","Time Step","gain","Reading","adc Milli Volts","Input mv","I","Irms"    
-			self.__adc_buffer.line_values[0] = str(self.reading_time[rc])
-			self.__adc_buffer.line_values[1] = str(self.scan_interval[rc])
-			self.__adc_buffer.line_values[2] = str(self.reading_gain[rc])
-			self.__adc_buffer.line_values[3] = str(self.reading[rc])
-			self.__adc_buffer.line_values[4] = str(self.adc_milli_volts[rc])  
-			self.__adc_buffer.line_values[5] = str(round(self.input_milli_volts[rc],3))  
-			self.__adc_buffer.line_values[6] = str(round(self.peak_current[rc],3))
-			self.__adc_buffer.line_values[7] = str(round(self.rms_current[rc],3))
-			#	self.__adc_buffer.line_values[7] = str(current_rms[rc])
-			#	self.__adc_buffer.line_values[8] = str(current[rc])
-			#	self.__adc_buffer.line_values[9] = str(zero_crossing[rc])
-			#	self.__adc_buffer.line_values[10] = "Spare1 "
-			#	self.__adc_buffer.line_values[11] = "Spare2 "
-
-		self.__adc_buffer.just_log(True,0,self.reading_time[rc],1234)

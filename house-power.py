@@ -33,31 +33,25 @@ import time
 from datetime import datetime
 
 # Local application imports
-from utility import pr,make_time_text,send_by_ftp
-from text_buffer import class_text_buffer
+from utility import pr,make_time_text,send_by_ftp,fileexists
+#from utility_037 import fileexists,pr,make_time_text
+#from text_buffer import class_text_buffer
 from config import class_config
 from get_adc import class_get_adc
 
-
-scan_size = 100
-diff_channel = 3
-
-default_gain = 1
-top_limit = 2020
-bottom_limit = 980
-#input_offset_mv = -6.5  # tested for channel 2
-#input_amp_gain = 100 # tested for channel 2
-input_offset_mv = 31 # tested for channel 3
-input_amp_gain = 9.48 # tested for channel 3
-CT_ratio = 1 # mAmps out to Amps in.
-CT_resister = 22
-
-
 config = class_config()
-adc = class_get_adc(scan_size,diff_channel,config,default_gain,top_limit,bottom_limit,input_offset_mv,input_amp_gain,CT_resister,CT_ratio)
 
-headings = ["Time","Time Step","gain","Reading","adc Milli Volts","Input mv","I","Irms" ] 
-analog_buffer = class_text_buffer(headings,config)
+if fileexists(config.config_filename):		
+	print( "will try to read Config File : " , config.config_filename )
+	config.read_file() # overwrites from file
+else : 
+	config.write_file()
+	print("New Config File Made with default values, you probably need to edit it")
+
+adc = class_get_adc(config)
+
+
+
 
 start_time = datetime.now()
 do_resets = True
@@ -68,26 +62,8 @@ read_time = 1000*(datetime.now() - start_time).total_seconds()
 
 adc.reading_time[0] = 0
 
-for rc in range(1,adc.scan_size,1):
-
-
-
-#                0        1        2       3          4                5       6    7    8             9            10      11
-#headings = ["Time","Time Step","gain","Reading","adc Milli Volts","Input mv","I","Irms"    
-	analog_buffer.line_values[0] = str(adc.reading_time[rc])
-	analog_buffer.line_values[1] = str(adc.scan_interval[rc])
-	analog_buffer.line_values[2] = str(adc.reading_gain[rc])
-	analog_buffer.line_values[3] = str(adc.reading[rc])
-	analog_buffer.line_values[4] = str(adc.adc_milli_volts[rc])  
-	analog_buffer.line_values[5] = str(round(adc.input_milli_volts[rc],3))  
-	analog_buffer.line_values[6] = str(round(adc.peak_current[rc],3))
-	analog_buffer.line_values[7] = str(round(adc.rms_current[rc],3))
-#	analog_buffer.line_values[7] = str(current_rms[rc])
-#	analog_buffer.line_values[8] = str(current[rc])
-#	analog_buffer.line_values[9] = str(zero_crossing[rc])
-#	analog_buffer.line_values[10] = "Spare1 "
-#	analog_buffer.line_values[11] = "Spare2 "
-	analog_buffer.just_log(True,0,adc.reading_time[rc],1234)
+debug_flag = False
+adc.do_log(debug_flag)
 
 end_file_time = datetime.now()
 
