@@ -38,6 +38,8 @@ from utility import pr,make_time_text,send_by_ftp,fileexists
 #from text_buffer import class_text_buffer
 from config import class_config
 from get_adc import class_get_adc
+from time import sleep as time_sleep
+from sys import exit as sys_exit
 
 config = class_config()
 
@@ -49,25 +51,38 @@ else :
 	print("New Config File Made with default values, you probably need to edit it")
 
 adc = class_get_adc(config)
+config.print_config()
+print("\nEdit Config File, Set reread flag to True then save (Ctrl C to exit)\n")
 
+scan_count = 0
 
+while (scan_count < config.max_scans) or (config.max_scans == 0):
+	scan_count += 1
+	print("Scan: ",scan_count)
+	try:
+		time_sleep(config.scan_delay) 
+		if config.check_reread_flag():
+			print("\n ReRead Flag Set, reading new values")
+			config.read_file()
+			config.reset_reread_flag()
+			config.print_config()
+			print("\n")
 
+		start_time = datetime.now()
+		print("Change Count: ",adc.do_scan(config,do_resets=config.debug_flag_1,change_limit=4))
+		read_time = 1000*(datetime.now() - start_time).total_seconds()
 
-start_time = datetime.now()
-do_resets = True
-change_limit = 4
-debug_flag = True
-print("Change Count: ",adc.do_scan(do_resets,change_limit,debug_flag))
-read_time = 1000*(datetime.now() - start_time).total_seconds()
+		adc.reading_time[0] = 0
 
-adc.reading_time[0] = 0
+		adc.do_log(config.debug_flag_2)
 
-debug_flag = False
-adc.do_log(debug_flag)
+		end_file_time = datetime.now()
 
-end_file_time = datetime.now()
+		file_time = 1000*(datetime.now() - start_time).total_seconds() - read_time
 
-file_time = 1000*(datetime.now() - start_time).total_seconds() - read_time
+		print("Read Time",read_time)
+		print("File Time",file_time,"\n")
 
-print("Read Time",read_time)
-print("File Time",file_time)
+	except KeyboardInterrupt:
+		print(".........Ctrl+C pressed...")
+		sys_exit()

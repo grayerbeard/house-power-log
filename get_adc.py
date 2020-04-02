@@ -8,39 +8,30 @@ class class_get_adc(object):
 	# Rotating Buffer Class
 	# Initiate with just the size required Parameter
 	# Get data with just a position in buffer Parameter
-#	def __init__(self,scan_size,channel,config,default_gain,top_limit,bottom_limit,input_offset_mv,input_amp_gain,CT_resister,CT_ratio):
 	def __init__(self,config):
 		#initialization
-		#self.__config = config
-		
 		self.__adc=Adafruit_ADS1x15.ADS1015()
-		
-		self.gain = config.adc_default_gain
-
-		self.scan_size =  config.adc_scan_size
-		self.__channel = config.adc_channel
-		self.__top_limit = config.adc_top_limit
-		self.__bottom_limit = config.adc_bottom_limit 
-		self.__input_offset_mv = config.adc_input_offset_mv
-		self.__input_amp_gain = config.adc_input_amp_gain
-		self.__CT_resister = config.CT_resister
-		self.__CT_ratio = config.CT_ratio
-
-		self.reading = [0.0]*(self.scan_size + 1)
-		self.adc_milli_volts = [0.0]*(self.scan_size + 1)
-		self.input_milli_volts = [0.0]*(self.scan_size + 1)
-		self.peak_current = [0.0]*(self.scan_size + 1)
-		self.rms_current = [0.0]*(self.scan_size + 1)
-		self.reading_time = [0.0]*(self.scan_size + 1)
-		self.reading_gain = [self.gain]*(self.scan_size + 1)
-		self.scan_interval =  [0.1]*(self.scan_size + 1)
-		self.gain_change_count = 0
+		self.__cnfg = config
 
 		headings = ["Time","Time Step","gain","Reading","adc Milli Volts","Input mv","I","Irms" ] 
 		self.__adc_buffer = class_text_buffer(headings,config)
+		self.setup_data()
             
+	def setup_data(self):
+		self.reading = [0.0]*(self.__cnfg.adc_scan_size + 1)
+		self.adc_milli_volts = [0.0]*(self.__cnfg.adc_scan_size + 1)
+		self.input_milli_volts = [0.0]*(self.__cnfg.adc_scan_size + 1)
+		self.peak_current = [0.0]*(self.__cnfg.adc_scan_size + 1)
+		self.rms_current = [0.0]*(self.__cnfg.adc_scan_size + 1)
+		self.reading_time = [0.0]*(self.__cnfg.adc_scan_size + 1)
+		self.reading_gain = [self.__cnfg.adc_default_gain]*(self.__cnfg.adc_scan_size + 1)
+		self.scan_interval =  [0.1]*(self.__cnfg.adc_scan_size + 1)
+		self.__data_size = self.__cnfg.adc_scan_size
 
-	def do_scan(self,do_resets,change_limit,debug_flag):
+	def do_scan(self,config,do_resets=True,change_limit=4):
+		self.__cnfg = config
+		if self.__cnfg.adc_scan_size != self.__data_size:
+			self.setup_data()
 		self.gain_change_count = 0
 		scan_count = 0
 		time_from_gain_change = 0.0
@@ -49,19 +40,25 @@ class class_get_adc(object):
 		rms_current_total = 0.001
 		rms_totaller_count = 0
 		rms_totaler_enable = False
+		self.gain = self.__cnfg.adc_default_gain # initial gain at start of scan
 
 		rms_totaller_cycle_count = -1
-		while scan_count < self.scan_size:
-			#print(rms_totaler_enable)
+		while scan_count < self.__cnfg.adc_scan_size:
 			self.reading_gain[scan_count] = self.gain
-			#self.reading[scan_count] = self.__adc.read_adc_difference(self.__channel,gain = self.gain)
-			self.reading[scan_count] = self.__adc.read_adc(self.__channel,gain = self.gain)
+			# Read the difference between two ADC channels and return the ADC value
+			# as a signed integer result.  Differential must be one of:
+			#	- 0 = Channel 0 minus channel 1
+			#	- 1 = Channel 0 minus channel 3
+			#	- 2 = Channel 1 minus channel 3
+			#	- 3 = Channel 2 minus channel 3	
+			self.reading[scan_count] = self.__adc.read_adc_difference(self.__cnfg.adc_channel,gain = self.gain)
+			#self.reading[scan_count] = self.__adc.read_adc(self.__cnfg.adc_channel,gain = self.gain)
 			if abs(self.reading[scan_count]) > reading_ac_max:
 				reading_ac_max = abs(self.reading[scan_count])
 			self.reading_time[scan_count] = self.reading_time[scan_count-1] + self.scan_interval[scan_count]
-			self.adc_milli_volts[scan_count] = (self.reading[scan_count] * 2/self.reading_gain[scan_count]) - self.__input_offset_mv
-			self.input_milli_volts[scan_count] = self.adc_milli_volts[scan_count] / self.__input_amp_gain
-			self.peak_current[scan_count] = self.input_milli_volts[scan_count]/self.__CT_resister/self.__CT_ratio
+			self.adc_milli_volts[scan_count] = (self.reading[scan_count] * 2/self.reading_gain[scan_count]) - self.__cnfg.adc_input_offset_mv
+			self.input_milli_volts[scan_count] = self.adc_milli_volts[scan_count] / self.__cnfg.adc_input_amp_gain
+			self.peak_current[scan_count] = self.input_milli_volts[scan_count]/self.__cnfg.CT_resister/self.__cnfg.CT_ratio
 			#Check for just been a zero crossing negative to positive
 			if True: # rms_totaler_enable:
 				rms_current_total = rms_current_total + (self.peak_current[scan_count] * self.peak_current[scan_count])
@@ -78,11 +75,11 @@ class class_get_adc(object):
 			self.scan_interval[scan_count] = 1000*((this_time - last_time ).total_seconds())
 			time_from_gain_change = time_from_gain_change + self.scan_interval[scan_count]
 			last_time = this_time
-			if debug_flag : print("#:%3d,Time:%6.2f,Gain:%2d,adcRdg:%5d,adcIn_mv:%5.2f, \
+			if self.__cnfg.debug_flag_2 : print("Scan:%3d,Time:%6.2f,Gain:%2d,adcRdg:%5d,adcIn_mv:%5.2f, \
 mvIn:%5.2f,Ipk%5.2f,rms:%5.2f" %
 (scan_count,self.reading_time[scan_count],self.gain,self.reading[scan_count],self.adc_milli_volts[scan_count],
 self.input_milli_volts[scan_count],self.peak_current[scan_count],self.rms_current[scan_count]))
-			if abs(self.reading[scan_count]) > self.__top_limit and (self.gain > 1) and self.gain_change_count < change_limit:
+			if abs(self.reading[scan_count]) > self.__cnfg.adc_top_limit and (self.gain > 1) and self.gain_change_count < change_limit:
 				self.gain = int(self.gain/2)
 				self.gain_change_count += 1
 				rms_current_total = 0
@@ -93,7 +90,7 @@ self.input_milli_volts[scan_count],self.peak_current[scan_count],self.rms_curren
 					# rms_current_total = 0
 					rms_totaler_enable = False
 					self.rms_current[scan_count] = 0
-			elif time_from_gain_change > 60 and (reading_ac_max < self.__bottom_limit) and (self.gain_change_count < change_limit) and (self.gain < 16):
+			elif time_from_gain_change > 60 and (reading_ac_max < self.__cnfg.adc_bottom_limit ) and (self.gain_change_count < change_limit) and (self.gain < 16):
 				self.gain = int(self.gain*2)
 				self.gain_change_count += 1
 				rms_current_total = 0
@@ -108,7 +105,7 @@ self.input_milli_volts[scan_count],self.peak_current[scan_count],self.rms_curren
 		return self.gain_change_count
 
 	def do_log(self,debug_flag):
-		for rc in range(1,self.scan_size,1):
+		for rc in range(1,self.__cnfg.adc_scan_size,1):
 #                0        1        2       3          4                5       6    7    8             9            10      11
 #headings = ["Time","Time Step","gain","Reading","adc Milli Volts","Input mv","I","Irms"    
 			self.__adc_buffer.line_values[0] = str(self.reading_time[rc])
@@ -124,5 +121,5 @@ self.input_milli_volts[scan_count],self.peak_current[scan_count],self.rms_curren
 			#	self.__adc_buffer.line_values[9] = str(zero_crossing[rc])
 			#	self.__adc_buffer.line_values[10] = "Spare1 "
 			#	self.__adc_buffer.line_values[11] = "Spare2 "
-
-		self.__adc_buffer.just_log(True,0,self.reading_time[rc],1234)
+		append = True
+		self.__adc_buffer.just_log(append,debug_flag,0,self.reading_time[rc],1234)

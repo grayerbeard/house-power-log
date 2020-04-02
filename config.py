@@ -33,13 +33,8 @@ from sys import exit as sys_exit
 #import socket
 from os import path
 from sys import argv as sys_argv
-
-# Third party imports
-#from w1thermsensor import W1ThermSensor
-
 # Local application imports
 from utility import pr,make_time_text,send_by_ftp,str2bool
-
 
 class class_config:
 	def __init__(self):

@@ -147,10 +147,9 @@ class class_text_buffer(object):
 				all_data[ind][i] = line_dta[i]
 		return(all_data)
 
-	def just_log(self,appnd,ref,log_time,refresh_interval):
+	def just_log(self,appnd,debug_flag,ref,log_time,refresh_interval):
 		self.__log.log_to_file(self.__headings,self.line_values)
-		print("calling copy log to www")
-		self.__log.copy_log_to_www(True)
+		self.__log.copy_log_to_www(debug_flag)
 
 	def pr(self,appnd,ref,log_time,refresh_interval):
 		here = "buffer.pr for " + self.__config.prog_name
