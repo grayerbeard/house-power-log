@@ -71,17 +71,19 @@ class class_config:
 		self.sauna_max_speed = 90
 		self.sauna_min_freq = 2.0
 		self.sauna_max_freq = 5.0
+		self.sauna_GPIO_port = 18
 		self.sauna_brightness = 80
 	# Power Log
 		self.adc_scan_size = 100
-		self.adc_channel = 0
+		self.adc_target_scan_msec = 80
+		self.adc_channel = 3
 		self.adc_default_gain = 1
 		self.adc_top_limit = 2000
 		self.adc_bottom_limit = 950
 		self.adc_input_offset_mv = 0 # 27.6518 #23.2184 # 26.62 # tested for channel 3
 		self.adc_input_amp_gain = 9.48 # tested for channel 3
-		self.CT_ratio = 1 # mAmps out to Amps in.
-		self.CT_resister = 22
+		self.adc_CT_ratio = 1 # mAmps out to Amps in.
+		self.adc_CT_resister = 22
 # End of items set in config.cfg	
 
 		# Based on the program name work out names for other files
@@ -130,6 +132,7 @@ class class_config:
 		self.sauna_brightness = float(config_read.get(section, 'sauna_brightness'))
 		section = "Power_Log"
 		self.adc_scan_size  =  int(config_read.get(section, 'adc_scan_size'))
+		self.adc_target_scan_msec  =  int(config_read.get(section, 'adc_target_scan_msec'))
 		self.adc_channel  =  int(config_read.get(section, 'adc_channel'))
 		self.adc_default_gain  =  int(config_read.get(section, 'adc_default_gain'))
 		self.adc_top_limit  =  int(config_read.get(section, 'adc_top_limit'))
@@ -184,6 +187,7 @@ class class_config:
 		section = "Power_Log"
 		config_write.add_section(section)
 		config_write.set(section, 'adc_scan_size',self.adc_scan_size)
+		config_write.set(section, 'adc_target_scan_msec',self.adc_target_scan_msec)
 		config_write.set(section, 'adc_channel',self.adc_channel)
 		config_write.set(section, 'adc_default_gain ',self.adc_default_gain )
 		config_write.set(section, 'adc_top_limit',self.adc_top_limit)
@@ -202,48 +206,49 @@ class class_config:
 	def print_config(self):
 		here = "config.print_config"
 		print("\n                   Section Debug")
-		print(" config.debug_reread_config is: ",self.debug_reread_config)   
-		print("        config.debug_flag_1 is: ",self.debug_flag_1)
-		print("        config.debug_flag_2 is: ",self.debug_flag_2)
-		print("      config.debug_flag_ftp is: ",self.debug_flag_ftp)
+		print("  config.debug_reread_config is: ",self.debug_reread_config)   
+		print("         config.debug_flag_1 is: ",self.debug_flag_1)
+		print("         config.debug_flag_2 is: ",self.debug_flag_2)
+		print("       config.debug_flag_ftp is: ",self.debug_flag_ftp)
 		print("\n                    Section Scan")
-		print("          config.scan_delay is: ",self.scan_delay)
-		print("          config.max_scans  is: ",self.max_scans)
+		print("           config.scan_delay is: ",self.scan_delay)
+		print("           config.max_scans  is: ",self.max_scans)
 		print("\n                     Section Log")
-		print("      config.log_directory  is: ",self.log_directory)
-		print("      config.local_dir_www  is: ",self.local_dir_www)
-		print("    config.log_buffer_flag  is: ",self.log_buffer_flag)
-		print(" config.text_buffer_length  is: ",self.text_buffer_length)
+		print("       config.log_directory  is: ",self.log_directory)
+		print("       config.local_dir_www  is: ",self.local_dir_www)
+		print("     config.log_buffer_flag  is: ",self.log_buffer_flag)
+		print("  config.text_buffer_length  is: ",self.text_buffer_length)
 		print("\n                     Section Ftp")
-		print(" config.ftp_creds_filename  is: ",self.ftp_creds_filename)
-		print("   config.ftp_log_max_count is: ",self.ftp_log_max_count)
-		print("        config.ftp_timeout  is: ",self.ftp_timeout)
-		print("             config.ftplog  is: ",self.ftplog)
+		print("  config.ftp_creds_filename  is: ",self.ftp_creds_filename)
+		print("    config.ftp_log_max_count is: ",self.ftp_log_max_count)
+		print("         config.ftp_timeout  is: ",self.ftp_timeout)
+		print("              config.ftplog  is: ",self.ftplog)
 		print("\n             Section Heating Fan")
-		print("      config.heat_max_temp  is: ",self.heat_max_temp)
-		print("      config.heat_min_temp  is: ",self.heat_min_temp)
-		print("     config.heat_min_speed  is: ",self.heat_min_speed)
-		print("     config.heat_max_speed  is: ",self.heat_max_speed)
-		print("      config.heat_min_freq  is: ",self.heat_min_freq)
-		print("      config.heat_max_freq  is: ",self.heat_max_freq)
+		print("       config.heat_max_temp  is: ",self.heat_max_temp)
+		print("       config.heat_min_temp  is: ",self.heat_min_temp)
+		print("      config.heat_min_speed  is: ",self.heat_min_speed)
+		print("      config.heat_max_speed  is: ",self.heat_max_speed)
+		print("       config.heat_min_freq  is: ",self.heat_min_freq)
+		print("       config.heat_max_freq  is: ",self.heat_max_freq)
 		print("\n                   Section Sauna")
-		print("     config.sauna_max_temp  is: ",self.sauna_max_temp)
-		print("     config.sauna_min_temp  is: ",self.sauna_min_temp) 
-		print("    config.sauna_min_speed  is: ",self.sauna_min_speed)
-		print("    config.sauna_max_speed  is: ",self.sauna_max_speed)
-		print("     config.sauna_min_freq  is: ",self.sauna_min_freq)
-		print("     config.sauna_max_freq  is: ",self.sauna_max_freq)
-		print("   config.sauna_brightness  is: ",self.sauna_brightness)
+		print("      config.sauna_max_temp  is: ",self.sauna_max_temp)
+		print("      config.sauna_min_temp  is: ",self.sauna_min_temp) 
+		print("     config.sauna_min_speed  is: ",self.sauna_min_speed)
+		print("     config.sauna_max_speed  is: ",self.sauna_max_speed)
+		print("      config.sauna_min_freq  is: ",self.sauna_min_freq)
+		print("      config.sauna_max_freq  is: ",self.sauna_max_freq)
+		print("    config.sauna_brightness  is: ",self.sauna_brightness)
 		print("\n               Section Power Log")
-		print("      config.adc_scan_size  is: ",self.adc_scan_size)
-		print("        config.adc_channel  is: ",self.adc_channel)
-		print("  config.adc_default_gain)  is: ",self.adc_default_gain)
-		print("      config.adc_top_limit  is: ",self.adc_top_limit)
-		print("   config.adc_bottom_limit  is: ",self.adc_bottom_limit)
-		print("config.adc_input_offset_mv  is: ",self.adc_input_offset_mv)
-		print(" config.adc_input_amp_gain  is: ",self.adc_input_amp_gain)
-		print("           config.CT_ratio  is: ",self.CT_ratio)
-		print("        config.CT_resister  is: ",self.CT_resister)
+		print("       config.adc_scan_size  is: ",self.adc_scan_size)
+		print("config.adc_target_scan_msec  is: ",self.adc_target_scan_msec)
+		print("         config.adc_channel  is: ",self.adc_channel)
+		print("   config.adc_default_gain)  is: ",self.adc_default_gain)
+		print("       config.adc_top_limit  is: ",self.adc_top_limit)
+		print("    config.adc_bottom_limit  is: ",self.adc_bottom_limit)
+		print(" config.adc_input_offset_mv  is: ",self.adc_input_offset_mv)
+		print("  config.adc_input_amp_gain  is: ",self.adc_input_amp_gain)
+		print("        config.adc_CT_ratio  is: ",self.adc_CT_ratio)
+		print("     config.adc_CT_resister  is: ",self.adc_CT_resister)
 
 	def check_reread_flag(self):
 		here = "config.read_file"
