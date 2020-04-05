@@ -252,6 +252,7 @@ class class_config:
 
 	def check_reread_flag(self):
 		here = "config.read_file"
+		print("Checking")
 		config_read = RawConfigParser()
 		config_read.read(self.config_filename)
 		section = "Debug"

@@ -74,22 +74,26 @@ while (scan_count < config.max_scans) or (config.max_scans == 0):
 			print("\n")
 
 		start_time = datetime.now()
-		last_gain = adc.do_scan(config,do_resets=config.debug_flag_1,change_limit=4,last_gain=last_gain)
+
+		print("Before do_scan")
+		last_gain = adc.do_scan(config,6,last_gain)
+		print("After do_scan")
+		print("Timing: ",round(adc.reading_time[adc.end_count],6),round(adc.reading_time[adc.start_count],6),round((adc.reading_time[adc.end_count]-adc.reading_time[adc.start_count]),6))
 		read_time = 1000*(datetime.now() - start_time).total_seconds()
 
 #		for ind in range(0,adc.scan_count-1,1)
 #			t[ind] = adc.reading_time[ind+1]
 #			data[ind] = adc.current[ind+1]
-		t = np.array(adc.reading_time[adc.reset_count:adc.scan_count-1])
-		data = np.array(adc.current[adc.reset_count:adc.scan_count-1])
-		guess_mean = 0
-		guess_std = 0
-		guess_phase = 0.010
+		t = np.array(adc.reading_time[adc.start_count:adc.end_count])
+		data = np.array(adc.current[adc.start_count:adc.end_count])
+		guess_mean = 0.0
+		guess_std = 0.0
+		guess_phase = 0.0
 		guess_freq = 50
-		guess_amp = adc.rms_current[adc.data_size]/0.707
+		guess_amp = adc.rms_current[adc.end_count]/0.707
 		debug_flag = config.debug_flag_1
-		print(adc.reset_count,adc.scan_count-1)
-		print("peak current from scan: " + str(adc.rms_current[adc.data_size]/0.707) + "(" + str(adc.rms_current[adc.data_size]) + ")")
+		print(adc.start_count,adc.end_count-1)
+		print("peak current from scan: " + str(adc.rms_current[adc.end_count]/0.707) + "(" + str(adc.rms_current[adc.end_count]) + ")")
 #		do_fit(t,data,guess_mean,guess_std,guess_phase,guess_freq,guess_amp,debug_flag)
 		estimate_sin.do_fit(t,data,guess_mean,guess_phase,guess_freq,guess_amp,debug_flag)
 		
@@ -103,7 +107,7 @@ while (scan_count < config.max_scans) or (config.max_scans == 0):
 		else:
 			start = adc.reset_count
 
-		adc.do_log(config.debug_flag_1,start,adc.data_size)
+		adc.do_log(config.debug_flag_1,adc.start_count,adc.end_count)
 
 		end_file_time = datetime.now()
 
